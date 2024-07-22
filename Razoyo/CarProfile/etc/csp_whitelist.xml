@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<csp_whitelist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Csp:etc/csp_whitelist.xsd">
+    <policies>
+    	<policy id="img-src">
+            <values>
+                <value id="razoyo1" type="host">https://exam.razoyo.com</value>
+                <value id="razoyo2" type="host">*.razoyo.com</value>
+                <value id="place1" type="host">https://placehold.co</value>
+                <value id="place2" type="host">*.placehold.co</value>
+            </values>
+        </policy>
+    </policies>
+</csp_whitelist>

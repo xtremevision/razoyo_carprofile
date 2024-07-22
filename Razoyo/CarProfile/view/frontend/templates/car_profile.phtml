@@ -1,0 +1,202 @@
+<?php
+$carCollection = $block->getCars();
+$savedCar = $block->getSavedCar();
+$imgSrc = $savedCar->getId() ? $savedCar->getImage() : "https://placehold.co/200x200?text=No+Car+Selected";
+?>
+
+<div>
+    <?php if(!empty($carCollection->cars)): ?>
+        <h2>Select Car:</h2>
+        <select id="carSelect">            
+            <option class="car" value="">-- SELECT --</option>
+            <?php foreach($carCollection->cars as $car): ?>
+                <option class="car" value="<?= $car->id ?>" <?php if($car->id == $savedCar->getCarId()) echo "selected"; ?>><?php printf("%s %s - %s", $car->make, $car->model, $car->year); ?></option>
+            <?php endforeach; ?>
+        </select>
+        <button id="saveCar" disabled>Save Car</button>
+    <?php endif; ?>
+</div>
+
+<p class="myMessage" style="display: none"></p>
+
+<div id="carDetails" class="divTable">
+    <div class="divTableBody">
+        <div class="divTableRow">
+            <div class="divTableCell cellImage">
+                <img id="carImage" src="<?= $imgSrc ?>" />
+            </div>
+            <div class="divTableCell cellCarData">
+                <p id="carMake">Make: <span><?php if($savedCar->getId()) echo $savedCar->getMake() ?></span></p>
+                <p id="carModel">Model: <span><?php if($savedCar->getId()) echo $savedCar->getModel() ?></span></p>
+                <p id="carYear">Year: <span><?php if($savedCar->getId()) echo $savedCar->getYear() ?></span></p>
+                <p id="carMPG">MPG: <span><?php if($savedCar->getId()) echo $savedCar->getMpg() ?></span></p>
+                <p id="carPrice">Price: <span><?php if($savedCar->getId()) echo $savedCar->getFormattedPrice() ?></span></p>
+                <p id="carSeats">Seats: <span><?php if($savedCar->getId()) echo $savedCar->getSeats() ?></span></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* DivTable.com */
+    .divTable{
+        display: table;
+        width: 100%;
+    }
+    .divTableRow {
+        display: table-row;
+    }
+    .divTableHeading {
+        background-color: #EEE;
+        display: table-header-group;
+    }
+    .divTableCell, .divTableHead {
+        display: table-cell;
+        padding: 3px 10px;
+    }
+
+    .divTableCell {
+        vertical-align: top;
+    }
+    .cellImage {
+        width: 50%;
+    }
+
+    .divTableCell p {
+        font-weight: bold;
+    }
+
+    .divTableCell p span {
+        font-weight: normal;
+    }
+
+    .cellCarData {
+        background-color: #f0f0f0;
+    }
+
+    .divTableHeading {
+        background-color: #EEE;
+        display: table-header-group;
+        font-weight: bold;
+    }
+    .divTableFoot {
+        background-color: #EEE;
+        display: table-footer-group;
+        font-weight: bold;
+    }
+    .divTableBody {
+        display: table-row-group;
+    }
+
+    #carDetails {
+        margin-top: 20px;
+    }
+
+    #carImage { 
+        width: 400px;
+        height: 400px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 5px;
+    }
+
+    .myMessage {
+        margin-top: 10px;
+        margin-left: 10px;
+    }
+
+    .error {
+        color: red;
+    }
+
+    .success {
+        color: green;
+    }
+
+    #saveCar {
+        margin-top: 10px;
+    }
+</style>
+
+<script>
+require([
+    'jquery',
+    'domReady!'// wait for dom ready
+],
+function ($) {
+    var selectedCar = "";
+    $('#saveCar').prop('disabled', 'disabled');
+    $('.myMessage').removeClass('error').removeClass('success');
+
+    $('#carSelect').on('change', function() {
+        $('.message').hide();
+        if(this.value != "")
+        {
+            $('#saveCar').prop('disabled', '');
+
+            $.ajax({
+                url: "/mycar/index/getcarinfo/",
+                type: "get", //send it through get method
+                showLoader: true, //use to display loader
+                data: { 
+                    carId: this.value, 
+                },
+                success: function(response) {
+                    console.log(response);
+                    if (response.redirectUrl) {
+                       window.location.href = response.redirectUrl;
+                    }
+
+                    if (typeof response.error != 'undefined') {
+                        $('.myMessage').addClass('error');
+                        $('.myMessage').text('Error getting car data.');
+                        $('.myMessage').show();
+                    }
+                    else {
+                        selectedCar = response.car;
+                        $('#carImage').attr('src', response.car.image);
+                        $('#carMake span').text(response.car.make);
+                        $('#carModel span').text(response.car.model);
+                        $('#carYear span').text(response.car.year);
+                        $('#carMPG span').text(response.car.mpg);
+                        $('#carPrice span').text(response.car.formattedPrice);
+                        $('#carSeats span').text(response.car.seats);
+                    }
+                },
+                error: function(xhr) {
+                    //Do Something to handle error
+                    //console.log(xhr);
+                }
+            });
+        }
+    });
+    $('#saveCar').on('click', function() {
+        console.log(selectedCar);
+        $.ajax({
+            url: "/mycar/index/savecar/",
+            type: "post", //send it through get method
+            showLoader: true, //use to display loader
+            data: { 
+                car: selectedCar, 
+            },
+            success: function(response) {
+                console.log(response);
+                if (response.redirectUrl) {
+                    window.location.href = response.redirectUrl;
+                }
+                else
+                {
+                    $('#saveCar').prop('disabled', 'disabled');
+                    $('.myMessage').addClass('success');
+                    $('.myMessage').text('Car saved to account.');
+                    $('.myMessage').show();
+                }
+            },
+            error: function(xhr) {
+                //Do Something to handle error
+                console.log(xhr);
+            }
+        });
+    });
+});
+</script>
